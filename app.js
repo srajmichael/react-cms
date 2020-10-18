@@ -48,9 +48,43 @@ app.use(session({
 
 
 app.get('/',(req,res)=>{
-   console.log(app.get('views'))
-   res.render('front-page');
+   console.log('has user', req.session.user)
+   const frontendPath = path.join(__dirname, 'client', 'public', 'index.html');
+   res.send(frontendPath);
+   // res.render('front-page');
 })
+
+
+app.post('/validate-user', async (req,res)=>{
+   const email = req.body.email;
+   const password = req.body.password;
+   const errors = [];
+
+   await User.findOne({ email: email }).exec()
+   .then(user=>{
+      if(!user){
+         errors.push('email');
+      }
+      const hashedPassword = user.password;
+      bcrypt.compare(password, hashedPassword, (err, results)=>{
+         if(err){
+            console.log(err)
+            res.redirect('/login')
+         }else{
+            req.session.user = user;
+            console.log(results, 'worked')
+            res.redirect('/login')
+         }
+      })
+      
+   })
+   .catch(err=>{
+      console.log(err)
+      res.redirect('/login')
+   })
+})
+
+
 
 app.get('/register', (req,res)=>{
    res.render('register');
@@ -74,7 +108,6 @@ app.post('/register', (req, res)=>{
          }
          const newUser = new User(userData);
          newUser.save((err)=>{
-            console.log(err, 'err')
             if(err){
                res.send('Failed Registration')
             }else{
@@ -88,7 +121,8 @@ app.post('/register', (req, res)=>{
 })
 
 app.get('/login', (req,res)=>{
-   if(req.user){
+   console.log(req.session, 'login user?')
+   if(req.session && req.session.user){
       res.redirect('/')
    }else{
       res.render('admin/login')
@@ -96,9 +130,37 @@ app.get('/login', (req,res)=>{
    
 })
 
-app.post('/login', (req,res)=>{
+app.post('/login', async (req,res)=>{
+   const email = req.body.email;
+   const password = req.body.password;
+   const errors = [];
 
-   res.redirect('/login')
+   await User.findOne({ email: email }).exec()
+   .then(user=>{
+      if(!user){
+         errors.push('email');
+         const url = '/login?error=' + errors.join(',');
+         res.redirect(url);
+      }
+      const hashedPassword = user.password;
+      bcrypt.compare(password, hashedPassword, (err, results)=>{
+         if(err){
+            console.log(err)
+            res.redirect('/login')
+         }else{
+            req.session.user = user;
+            console.log(results, 'worked')
+            res.redirect('/login')
+         }
+      })
+      
+   })
+   .catch(err=>{
+      console.log(err)
+      res.redirect('/login')
+   })
+
+   
 })
 
 
@@ -115,6 +177,6 @@ app.get('/adminonly', (req,res)=>{
    }
 })
 
-const port = process.env.SERVER_PORT;
+const port = process.env.DEV_SERVER_PORT;
 
 app.listen(port)
