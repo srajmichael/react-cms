@@ -59,7 +59,7 @@ app.post('/validate-user', async (req,res)=>{
    const email = req.body.email;
    const password = req.body.password;
    const errors = [];
-   console.log('body', req.body)
+   
    await User.findOne({ email: email }).exec()
    .then(user=>{
       //if email isn't found in the database

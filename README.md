@@ -1,0 +1,1 @@
+This project is intended to be a Content Management System (CMS) built off of Node.js and React.
