@@ -59,24 +59,31 @@ app.post('/validate-user', async (req,res)=>{
    const email = req.body.email;
    const password = req.body.password;
    const errors = [];
-
+   console.log('body', req.body)
    await User.findOne({ email: email }).exec()
    .then(user=>{
+      //if email isn't found in the database
       if(!user){
-         errors.push('email');
-      }
-      const hashedPassword = user.password;
-      bcrypt.compare(password, hashedPassword, (err, results)=>{
-         if(err){
-            console.log(err)
-            res.redirect('/login')
-         }else{
-            req.session.user = user;
-            console.log(results, 'worked')
-            res.redirect('/login')
-         }
-      })
-      
+         errors.push('No user found with that email.');
+         res.json({validUser: false, errors: errors})
+      //if email found, validate password
+      }else{
+         const hashedPassword = user.password;
+         bcrypt.compare(password, hashedPassword, (err, results)=>{
+            if(err){
+               errors.push('Incorrect Password.');
+               res.json({validUser: false, errors: errors})
+            }else{
+               req.session.user = user;
+               res.json({validUser: {
+                  _id: user._id,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                  email: user.email
+               }, errors: null})
+            }
+         })
+      }  
    })
    .catch(err=>{
       console.log(err)
@@ -175,6 +182,11 @@ app.get('/adminonly', (req,res)=>{
    }else{
       res.redirect('/login')
    }
+})
+
+
+app.get('/test', (req, res)=>{
+   res.json({we:'didit'})
 })
 
 const port = process.env.DEV_SERVER_PORT;
