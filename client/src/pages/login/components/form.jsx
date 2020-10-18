@@ -29,8 +29,11 @@ const LoginForm = () => {
       let res = await api.post('/validate-user',{
          email: email,
          password: password
+      }).then((res)=>{
+         setIsLoading(false);
+         console.log(res)
       });
-      console.log(res)
+
    }
 
 
@@ -39,7 +42,7 @@ const LoginForm = () => {
          { 
          isLoading 
          &&
-         <p className='form-loading'>Loading!</p>
+         <p className='form-loading'>Loading</p>
          }
          <input type='text' placeholder='Email' value={email} onChange={handleOnChange.bind(null,'email')}/>
          <input type='password' placeholder='Password' value={password} onChange={handleOnChange.bind(null,'password')}/>

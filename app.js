@@ -70,6 +70,9 @@ app.post('/validate-user', async (req,res)=>{
          const hashedPassword = user.password;
          bcrypt.compare(password, hashedPassword, (err, results)=>{
             if(err){
+               errors.push('Unknown Error Has Occured.');
+               res.json({validUser: false, errors: errors})
+            }else if(!results){
                errors.push('Incorrect Password.');
                res.json({validUser: false, errors: errors})
             }else{
