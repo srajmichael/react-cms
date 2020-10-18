@@ -36,9 +36,18 @@ const LoginForm = () => {
 
    }
 
+   const test = async (e) => {
+      e.preventDefault();
+      let res = await api.get('/check-user-session')
+      .then(data=>{
+         console.log(data)
+      })
+   }
+
 
    return(
       <form onSubmit={handleOnSubmit}>
+         <button onClick={test}>Test</button>
          { 
          isLoading 
          &&

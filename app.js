@@ -54,6 +54,10 @@ app.get('/',(req,res)=>{
    // res.render('front-page');
 })
 
+app.get('/check-user-session', (req,res)=>{
+   const userData = req.session.user || {}
+   res.json({user: userData})
+})
 
 app.post('/validate-user', async (req,res)=>{
    const email = req.body.email;
@@ -76,13 +80,14 @@ app.post('/validate-user', async (req,res)=>{
                errors.push('Incorrect Password.');
                res.json({validUser: false, errors: errors})
             }else{
-               req.session.user = user;
-               res.json({validUser: {
+               const nonAuthUserData = {
                   _id: user._id,
                   firstName: user.firstName,
                   lastName: user.lastName,
                   email: user.email
-               }, errors: null})
+               }
+               req.session.user = nonAuthUserData;
+               res.json({validUser: nonAuthUserData, errors: null})
             }
          })
       }  
