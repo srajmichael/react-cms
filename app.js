@@ -9,6 +9,8 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo')(session);
 
+const { passwordValidationInformation } = require('./utils/validators');
+
 //MONGOOSE CONNECTION
 const connection = require('./utils/database');
 
@@ -24,6 +26,7 @@ const sessionStore = new MongoStore({
 //MODELS
 const User = require('./models/User');
 const Post = require('./models/Post');
+const e = require('express');
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -46,13 +49,13 @@ app.use(session({
    }
 }));
 
-
-app.get('/',(req,res)=>{
-   console.log('has user', req.session.user)
-   const frontendPath = path.join(__dirname, 'client', 'public', 'index.html');
-   res.send(frontendPath);
-   // res.render('front-page');
+app.get('/ball', (req,res)=>{
+   res.type('.js');
+   res.send("console.log('worked from node')")
 })
+
+
+
 
 app.get('/check-user-session', (req,res)=>{
    const userData = req.session.user || {}
@@ -98,6 +101,46 @@ app.post('/validate-user', async (req,res)=>{
    })
 })
 
+
+app.post('/register-user', async (req, res)=>{
+   const { email, password, confirmationPassword, firstName, lastName } = req.body;
+   const jsonResponse = { errors:[], submittedSuccessfully: false, visited:[] };
+
+   //PASWORD VALIDATION
+   const passwordValidationInfo = passwordValidationInformation(password, confirmationPassword, true);
+   
+   if(!passwordValidationInfo.valid){
+      for(let err of passwordValidationInfo.errors){
+         jsonResponse.errors.push(err)
+      }
+   }
+
+   const foundUser = await User.findOne({ email: email }).exec();
+
+   if(!foundUser && passwordValidationInfo.valid){
+      const saltRounds = 10;
+
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const userData = {
+         firstName,
+         lastName,
+         email,
+         password: hashedPassword
+      };
+
+      const newUser = new User(userData);
+
+      const savedUser = await newUser.save();
+
+      console.log(savedUser, 'saved user')
+
+   }else{
+      jsonResponse.errors.push('Email Already Exists');
+   }
+
+   res.json(jsonResponse)
+})
 
 
 app.get('/register', (req,res)=>{
@@ -196,6 +239,16 @@ app.get('/test', (req, res)=>{
    res.json({we:'didit'})
 })
 
+app.get('/',(req,res)=>{
+   const frontendPath = path.join(__dirname, 'client', 'public', 'index.html');
+   res.sendFile(frontendPath);
+   // res.render('front-page');
+})
+
 const port = process.env.DEV_SERVER_PORT;
 
 app.listen(port)
+
+
+
+

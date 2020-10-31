@@ -26,7 +26,7 @@ const LoginForm = () => {
    const handleOnSubmit = async (e) => {
       e.preventDefault();
       setIsLoading(true);
-      let res = await api.post('/validate-user',{
+      let resolution = await api.post('/validate-user',{
          email: email,
          password: password
       }).then((res)=>{
